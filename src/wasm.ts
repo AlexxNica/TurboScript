@@ -1,10 +1,9 @@
-import {Symbol, SymbolKind, isFunction} from "./symbol";
-import {ByteArray, ByteArray_append32, ByteArray_set32, ByteArray_setString, ByteArray_set16} from "./bytearray";
+import {isFunction, Symbol, SymbolKind} from "./symbol";
+import {ByteArray, ByteArray_set32, ByteArray_setString} from "./bytearray";
 import {CheckContext} from "./checker";
 import {alignToNextMultipleOf} from "./imports";
-import {Node, NodeKind, isExpression, isUnary} from "./node";
+import {isExpression, isUnary, Node, NodeKind} from "./node";
 import {Type} from "./type";
-import {StringBuilder_new, StringBuilder} from "./stringbuilder";
 import {Compiler} from "./compiler";
 import {WasmOpcode} from "./wasm/opcode";
 import {toHex} from "./utils";
@@ -730,9 +729,13 @@ class WasmModule {
 
             // Functions without bodies are imports
             if (body == null) {
-                let moduleName = symbol.kind == SymbolKind.FUNCTION_INSTANCE ? symbol.parent().name : "global";
-                symbol.offset = this.importCount;
-                this.allocateImport(signatureIndex, moduleName, symbol.name);
+                //FIXME: dirty hack to support wasm native sqrt
+                if (symbol.name !== "sqrt32" && symbol.name !== "sqrt64") {
+                    let moduleName = symbol.kind == SymbolKind.FUNCTION_INSTANCE ? symbol.parent().name : "global";
+                    symbol.offset = this.importCount;
+                    this.allocateImport(signatureIndex, moduleName, symbol.name);
+                }
+
                 node = node.nextSibling;
                 return;
             } else {
@@ -1279,11 +1282,12 @@ class WasmModule {
             let symbol = value.symbol;
             assert(isFunction(symbol.kind));
 
+
             // Write out the implicit "this" argument
             if (!symbol.node.isExternalImport() && symbol.kind == SymbolKind.FUNCTION_INSTANCE) {
                 let dotTarget = value.dotTarget();
                 this.emitNode(array, byteOffset, dotTarget);
-                if(dotTarget.kind == NodeKind.NEW){
+                if (dotTarget.kind == NodeKind.NEW) {
                     this.emitConstructor(array, byteOffset, dotTarget);
                 }
             }
@@ -1293,10 +1297,17 @@ class WasmModule {
                 this.emitNode(array, byteOffset, child);
                 child = child.nextSibling;
             }
-            let callIndex: int32 = this.getWasmFunctionCallIndex(symbol);
-            appendOpcode(array, byteOffset, WasmOpcode.CALL);
-            log(array, byteOffset, callIndex, `call func index (${callIndex})`);
-            array.writeUnsignedLEB128(callIndex);
+            if (symbol.name === "sqrt32") {
+                appendOpcode(array, byteOffset, WasmOpcode.F32_SQRT);
+            } else if (symbol.name === "sqrt64") {
+                appendOpcode(array, byteOffset, WasmOpcode.F64_SQRT);
+            } else {
+                let callIndex: int32 = this.getWasmFunctionCallIndex(symbol);
+                appendOpcode(array, byteOffset, WasmOpcode.CALL);
+                log(array, byteOffset, callIndex, `call func index (${callIndex})`);
+                array.writeUnsignedLEB128(callIndex);
+            }
+
         }
 
         else if (node.kind == NodeKind.NEW) {

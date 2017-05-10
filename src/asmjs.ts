@@ -1,13 +1,10 @@
 import {CheckContext} from "./checker";
-import {ByteArray, ByteArray_append32, ByteArray_set32, ByteArray_setString, ByteArray_set16} from "./bytearray";
-import {StringBuilder, StringBuilder_appendQuoted, StringBuilder_new} from "./stringbuilder";
-import {
-    Node, isCompactNodeKind, isUnaryPostfix, NodeKind, invertedBinaryKind, NODE_FLAG_DECLARE,
-    isBinary
-} from "./node";
+import {ByteArray, ByteArray_set32, ByteArray_setString} from "./bytearray";
+import {StringBuilder, StringBuilder_new} from "./stringbuilder";
+import {invertedBinaryKind, isBinary, isCompactNodeKind, isUnaryPostfix, Node, NodeKind} from "./node";
 import {Precedence} from "./parser";
-import {jsKindCastsOperandsToInt, EmitBinary} from "./js";
-import {SymbolKind, Symbol} from "./symbol";
+import {jsKindCastsOperandsToInt} from "./js";
+import {Symbol, SymbolKind} from "./symbol";
 import {Compiler} from "./compiler";
 import {Type} from "./type";
 import {alignToNextMultipleOf} from "./imports";
@@ -429,7 +426,8 @@ export class AsmJsModule {
         }
 
         else if (node.kind == NodeKind.STRING) {
-            this.code.append(`\`${node.stringValue}\``);
+            let value = ASM_MEMORY_INITIALIZER_BASE + node.intValue;
+            this.code.append(value + "|0");
         }
 
         else if (node.kind == NodeKind.CAST) {
@@ -625,7 +623,7 @@ export class AsmJsModule {
                             let dotTarget = value.dotTarget();
                             if (dotTarget.kind == NodeKind.NEW) {
                                 this.emitExpression(dotTarget, Precedence.LOWEST);
-                            }else if (dotTarget.symbol.kind == SymbolKind.VARIABLE_GLOBAL) {
+                            } else if (dotTarget.symbol.kind == SymbolKind.VARIABLE_GLOBAL) {
                                 this.emitExpression(dotTarget, Precedence.ASSIGN, true);
                             } else {
                                 let ref = dotTarget.symbol.internalName == "this" ? "ptr" : dotTarget.symbol.internalName;
@@ -1631,10 +1629,17 @@ export class AsmJsModule {
 
     prepareToEmit(node: Node): void {
         if (node.kind == NodeKind.STRING) {
+            //TODO: write to initial memory
             let text = node.stringValue;
             let length = text.length;
             let offset = this.context.allocateGlobalVariableOffset(length * 2 + 4, 4);
-            //TODO: write to initial memory
+            node.intValue = offset;
+            this.growMemoryInitializer();
+            let memoryInitializer = this.memoryInitializer;
+
+            // Emit a length-prefixed string
+            ByteArray_set32(memoryInitializer, offset, length);
+            ByteArray_setString(memoryInitializer, offset + 4, text);
         }
 
         else if (node.kind == NodeKind.IMPORTS) {

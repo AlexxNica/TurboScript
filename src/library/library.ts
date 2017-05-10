@@ -18,9 +18,11 @@ export class Library {
             case CompileTarget.ASMJS:
                 lib = [
                     readLibraryFile("/common/types.tbs"),
+                    readLibraryFile("/common/malloc.tbs"),
+                    readLibraryFile("/common/memory_utils.tbs"),
+                    // readLibraryFile("/common/string_types.tbs"),
                     readLibraryFile("/common/foreign.tbs"),
                     readLibraryFile("/common/math.tbs"),
-                    readLibraryFile("/common/malloc.tbs"),
                     readLibraryFile("/common/array.tbs")
                 ].join('\n');
                 break;

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>string test</title>
+</head>
+<body>
+<script src="./bin/string.asm.js"></script>
+<script>
+    var turbo = TurboASM.Instance(0x10000);
+    readUTFString(turbo.exports.createString());
+
+
+    function readUTFString(ptr) {
+        let decoder = new TextDecoder();
+        let length = turbo.HEAP32[ptr >> 2 + 1];
+        let data = new Uint8Array(turbo.RAW_MEMORY, ptr + 8,length);
+        console.log(decoder.decode(data));
+    }
+
+</script>
+</body>
+</html>

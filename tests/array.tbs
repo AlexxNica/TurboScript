@@ -9,6 +9,11 @@ export class Data {
     constructor(id: int32) {
         this.id = id;
     }
+
+    getV1():float32 {
+        return this.v1;
+    }
+
     set(v1:float32, v2:float32, v3:float32):void{
         this.v1 = v1;
         this.v2 = v2;

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>string test</title>
+</head>
+<body>
+<script>
+
+    var importObject = {
+        memory: new WebAssembly.Memory({initial: 10})
+    };
+
+    function init() {
+        fetch("./bin/string.wasm").then((responds) => {
+            responds.arrayBuffer().then((wasmBytes) => {
+                try {
+                    WebAssembly.compile(wasmBytes).then(function (compiled) {
+                        window.exports = new WebAssembly.Instance(compiled, importObject).exports;
+                        window.HEAPU8 = new Uint8Array(exports.memory.buffer);
+                        window.HEAPU32 = new Uint32Array(exports.memory.buffer);
+                        window.HEAP32 = new Int32Array(exports.memory.buffer);
+                        window.HEAPF32 = new Float32Array(exports.memory.buffer);
+                        console.log("WASM Compiled!");
+                        run();
+                    })
+
+                } catch (e) {
+                    console.error(e);
+                }
+            })
+        });
+    }
+
+    function run() {
+        readUTFString(exports.createString());
+    }
+    function readUTFString(ptr) {
+        let decoder = new TextDecoder();
+        let length = HEAP32[ptr >> 2 + 1];
+        let data = new Uint8Array(HEAP32.buffer, ptr + 8,length);
+        console.log(decoder.decode(data));
+    }
+    init();
+</script>
+</body>
+</html>

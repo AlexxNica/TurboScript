@@ -1,0 +1,4 @@
+export function createString():string {
+    let str = "THIS_IS_A_STRING";
+    return str;
+}

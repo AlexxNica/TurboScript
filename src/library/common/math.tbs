@@ -21,7 +21,9 @@ declare class Math {
     //static random(): float64; // 'random' is not a standard Math builtin
     // static round(x: float64): float64; //'round' is not a standard Math builtin
     static sin(x: float64): float64;
+
     static sqrt(x: float32): float32;
+
     static tan(x: float64): float64;
     static imul(a: int32, b:int32): int32;
 }
@@ -44,3 +46,8 @@ function minf32(x:float32, y:float32):float32{
 function maxf32(x:float32, y:float32):float32{
     return Math.max(x as float64, y as float64) as float32;
 }
+
+
+//WASM Native functions
+declare function sqrt32(value:float32):float32;
+declare function sqrt64(value:float64):float64;

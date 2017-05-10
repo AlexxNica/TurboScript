@@ -1,0 +1,6 @@
+export function createString():string {
+    let str1 = "THIS_IS_A_STRING";
+    let str2 = "PART_2";
+    return str1 + str2;
+}
+
