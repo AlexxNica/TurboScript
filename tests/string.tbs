@@ -1,6 +1,5 @@
-export function createString():string {
-    let str1 = "THIS_IS_A_STRING";
+export function createString():boolean {
+    let str1 = "PART_2";
     let str2 = "PART_2";
-    return str1 + str2;
+    return str1 == str2;
 }
-

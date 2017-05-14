@@ -36,6 +36,7 @@
         readUTFString(exports.createString());
     }
     function readUTFString(ptr) {
+        console.log(ptr);
         let decoder = new TextDecoder();
         let length = HEAP32[ptr >> 2 + 1];
         let data = new Uint8Array(HEAP32.buffer, ptr + 8,length);
